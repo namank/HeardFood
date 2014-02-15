@@ -70,7 +70,7 @@
         noDefault();
     }
     var map,geocoder, latlng, zipcode;
-    
+    var item;
     function success(position) {
         latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
         var mapOptions = {
@@ -97,7 +97,19 @@
         
         $("pac-input").val("");
         var searchBox = new google.maps.places.SearchBox( /** @type {HTMLInputElement} */ (input));
-        google.maps.event.addListener(searchBox, 'places_changed', validateForm(searchBox));
+        google.maps.event.addListener(searchBox, 'places_changed', function() {            
+            var places = searchBox.getPlaces();
+            var name = document.getElementById("name").value;
+            var addr = document.getElementById("pac-input").value;
+            var curbox = document.getElementById("current");
+            var desc = document.getElementById("desc").value;
+            item = {};
+            item['name'] = name;
+            item['loc'] = addr;
+            item['lat'] = places[0].geometry.location.d;
+            item['lng'] = places[0].geometry.location.e;                
+            item['desc'] = desc;            
+        });
         
         geocoder.geocode({'latLng': latlng}, function(results, status) {
             zipcode = "19104";
@@ -166,32 +178,26 @@
         
     }
     
-    function validateForm(searchBox){
-        var zipRef = myRef.child(zipcode);
-        var name = $("#name").value;
-        var addr = $("#pac-input").value;
-        var curbox = document.getElementById("current");
-        if(name.length > 0 && (addr.length > 0 || curbox.checked == true)){
-            //alert("enable search");
-            
-            var places = searchBox.getPlaces();
-            // For each place, get the icon, place name, and location.                
-            console.log(places[0].formated_address);
-            console.log(places[0].geometry.location.d, places[0].geometry.location.e);
-            /*var item = {};
-            item['name'] = "Gaurang name2";
-            item['loc'] = "Gaurang loc";
-            item['desc'] = "Gaurang description";
-            
-            var newPushRef = zipRef.push();
-            // Set some data to the generated location
-            newPushRef.set(item);*/
-
+    function addFood(){
         
-            document.getElementById("submit").disabled = false;
-            console.log($('pac-input').text());
+        var zipRef;
+        if (zipcode) {
+            zipRef = myRef.child(zipcode);
         } else {
-            document.getElementById("submit").disabled = true;
+            zipRef = myRef.child("19104");
+        }
+        
+        if(item['name'].length > 0 && (item['loc'].length > 0 || document.getElementById("curbox").checked == true)){            
+            var newPushRef = zipRef.push();
+            console.log(item);
+            // Set some data to the generated location
+            newPushRef.set(item);
+            
+            item = {};
+            document.getElementById("name").value = "";
+            document.getElementById("pac-input").value = "";
+            document.getElementById("desc").value = "";
+            document.getElementById("current").checked = false;            
         }
     }
     $(document).ready(function(){      
@@ -206,14 +212,14 @@
             <table>
             <tr>
             <td>Name: </td><td>
-            <input type=text width=20 id="name" onchange="/*validateForm()*/"/>
+            <input type=text width=20 id="name" />
             </td></tr><td>Adress: </td>
             <td>
             <input id="pac-input" class="controls" type="text" placeholder="Search Box">
-            </td><tr><td></td><td>Use my current location: <input type=checkbox id="current" onchange="/*validateForm()*/"/></td></tr>
+            </td><tr><td></td><td>Use my current location: <input type=checkbox id="current" /></td></tr>
             <td>Description: </td><td><textarea id="desc"></textarea></td></tr>
             </table>
-            <input type="button" id="submit" value="Add Food" onClick="/*validateForm()*/" disabled=true/>
+            <input type="button" id="submit" value="Add Food" onclick="addFood()"/>
         </form>          
     <div style="width:90%" id="map-canvas"/>
   </body>
