@@ -61,53 +61,62 @@
     </style>    
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.0.min.js"> </script>
     <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBspUEDd0uX8Il_1rp3Jri5bju2THqfezE&sensor=false&libraries=places"></script>
+    <script type='text/javascript' src='https://cdn.firebase.com/v0/firebase.js'></script>
     <script type="text/javascript">
+    var myRef = new Firebase('http://nsdev.firebaseIO.com/');
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(success, noDefault);
     } else {
         noDefault();
     }
-    var map;
-    var select = {
-		'money': 0,
-        'technology':0,
-        'sports':0,
-        'news2':1,
-        'politics':0
-	}
+    var map,geocoder, latlng, zipcode;
     
-    var ids = {
-        'money': '1017',
-        'technology':'1019',
-        'sports':'1055',
-        'news2':'1001',
-        'politics':'1014'
-    }
-    var idSel=ids['news'];
     function success(position) {
-        var latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+        latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
         var mapOptions = {
             center: latlng,
             zoom: 15
         };
         map = new google.maps.Map(document.getElementById("map-canvas"),
             mapOptions);
-        google.maps.event.addListener(map, 'tilesloaded', function () {
-            getCountry(map.getBounds());
+        geocoder = new google.maps.Geocoder();
+        /*google.maps.event.addListener(map, 'tilesloaded', function () {
+            
+        });     */     
+
+        
+
+        // To add the marker to the map, use the 'map' property
+        var marker = new google.maps.Marker({
+            position: latlng,
+            map: map,
+            title:"My Location"
         });
+        
         var input = /** @type {HTMLInputElement} */ (document.getElementById('pac-input'));
-        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+        
         $("pac-input").val("");
         var searchBox = new google.maps.places.SearchBox( /** @type {HTMLInputElement} */ (input));
-        google.maps.event.addListener(searchBox, 'places_changed', function () {
-            var places = searchBox.getPlaces();
-            // For each place, get the icon, place name, and location.                
-            var bounds = new google.maps.LatLngBounds();
-            for (var i = 0, place; place = places[i], i < 1; i++) {
-                bounds.extend(place.geometry.location);
-                map.setCenter(place.geometry.location);
-                map.setZoom(15);
+        google.maps.event.addListener(searchBox, 'places_changed', validateForm(searchBox));
+        
+        geocoder.geocode({'latLng': latlng}, function(results, status) {
+            zipcode = "19104";
+            if (status == google.maps.GeocoderStatus.OK) {
+              if (results[1]) {
+                var address = results[0].address_components;
+                zipcode = address[address.length - 1].long_name;
+                if (zipcode == "") {
+                    console.log("Zip code not found. Using zipcode 19104.");
+                } else {
+                    console.log(zipcode);
+                }                
+              } else {
+                console.log("Using zipcode 19104. Zip code not found.");
+              }
+            } else {
+                console.log("Using zipcode 19104. Geocode error: "+status);
             }
+            displayFood(zipcode);
         });
     };
     
@@ -118,138 +127,73 @@
         };
         map = new google.maps.Map(document.getElementById("map-canvas"),
             mapOptions);
-        var input = /** @type {HTMLInputElement} */ (
-            document.getElementById('pac-input'));
-        map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
-
-        var searchBox = new google.maps.places.SearchBox( /** @type {HTMLInputElement} */ (input));
-        google.maps.event.addListener(searchBox, 'places_changed', function () {
-            var places = searchBox.getPlaces();
-            // For each place, get the icon, place name, and location.                
-            var bounds = new google.maps.LatLngBounds();
-            for (var i = 0, place; place = places[i], i < 1; i++) {
-                bounds.extend(place.geometry.location);
-                map.setCenter(place.geometry.location);
-                map.setZoom(15);
-            }
-        });
 
     };
-    var countries = [];
-    var counts = [];
-    var index = 0;
-    // alert country based on latlong
-    function getCountry(bounds) {
-        countries = [];
-        counts = [];
-        index = 0;
-        var geocoder = new google.maps.Geocoder();
-        var NE = bounds.getNorthEast();
-        var SW = bounds.getSouthWest();
-        var unitLat = Math.abs((SW.lat() - NE.lat()) / 4.0);
-        var unitLng = Math.abs((SW.lng() - NE.lng()) / 4.0);
-        var NW = new google.maps.LatLng(NE.lat(), SW.lng());
-        var points = [
-            [1, -1],
-            [3, -1],
-            [2, -2],
-            [1, -3],
-            [3, -3]
-        ];
-        var latlong;
-        for (var i = 0; i < points.length; i++) {
-            latlong = new google.maps.LatLng(NW.lat() + points[i][1] * unitLat, NW.lng() + points[i][0] * unitLng);
-            geocoder.geocode({
-                'location': latlong
-            }, function (results, status) {
-                //console.log("Event");
-                if (status == google.maps.GeocoderStatus.OK) {
-                    if (results[1]) {
-                        index = countries.indexOf((results[1].formatted_address).match(/[\w\s]+$/)[0].trim());
-                        if (index == -1) {
-                            countries.push((results[1].formatted_address).match(/[\w\s]+$/)[0].trim());
-                            counts.push(1);
-                            //console.log("Country: " + countries[countries.length-1]);
-                        } else {
-                            counts[index]++;
-                        }
-                        //updateStories((results[1].formatted_address).match(/[\w\s]+$/)[0]);
-                        //throw new Error(latlong.lat() + ', ' + latlong.lng() + ', ' + results[1].formatted_address);
-                    } else {
-                        //alert('No result');
-                        index = countries.indexOf('World');
-                        if (index == -1) {
-                            countries.push('World');
-                            counts.push(1);
-                        } else {
-                            counts[index]++;
-                        }
-                    }
-                } else {
-                    index = countries.indexOf('World');
-                    if (index == -1) {
-                        countries.push('World');
-                        counts.push(1);
-                    } else {
-                        counts[index]++;
-                    }
-                }
+    
+    function displayFood(zipcode) {
+        var zipRef = myRef.child(zipcode);
+        
+        // display food
+        // for each event, see if lat long is "near"
+        zipRef.on('child_added', function(snapshot) {
+          var item = snapshot.val();
+          if (map.getBounds().contains(new google.maps.LatLng(item.lat, item.lng))) {
+            // To add the marker to the map, use the 'map' property
+            var marker = new google.maps.Marker({
+                position: new google.maps.LatLng(item.lat, item.lng),
+                map: map,
+                title:item.name
             });
-        }
-        window.setTimeout(function () {            
-            displayNews();            
-        }, 500);
-    }
+            var contentString = '<div id="content">'+              
+              '<h4 id="itemHeader" class="header">'+item.name+'</h4>'+
+              '<div id="itemContent">'+
+              item.loc+'<br/>'+item.desc+''+
+              '</div>'+
+              '</div>';
 
-    function displayNews() {        
-        $("#accordion").empty();
-        for (var c = 0; c < countries.length; c++) {
-            //console.log(countries[c] + ", " + counts[c]);
-            updateStories(countries[c], counts[c] * 2);
-        }
-        if (countries.length == 0) {
-            //console.log("World, " + 10);
-            updateStories('World', 10);
-        }
-    }                
-
-    // google.maps.event.addDomListener(window, 'load', initialize);
-    function updateStories(place, numResults) {
-        // given a place, display (up to) 10 NPR stories with it          
-        var news = "";
-        news = "<h3>" + place + "</h3><div><ul style='list-style:none; padding:0'>";
-		console.log(idSel);
-        $.ajax({
-            url: "http://api.npr.org/query?apiKey=MDEzMTU2NjM5MDEzOTE4MzE1MjA5YjY1YQ001&searchType=mainText&action=Or&output=JSON&searchTerm=" + place + "&numResults=" + numResults+"&id="+idSel,
-            dataType: 'jsonp',
-            success: function (data) {
-                // do stuff with json (in this case an array)
-				console.log(data);    
-				// TODO - error checking here  
-				if (data['list']['story']) {        
-                $.each(data['list']['story'], function (i, item) {
-                    title = item['title']['$text']; // get the text
-                    url = item['link'][0]['$text'];
-                    miniTeaser = item['miniTeaser'] && item['miniTeaser']['$text'] ? item['miniTeaser']['$text'] : "";
-                    if (miniTeaser == "") {
-                        miniTeaser = item['teaser']['$text'];
-                    }
-                    news += ("<li><a href='" + url + "' target='_blank'>" + title + "</a><br/>" + miniTeaser + "</li>");
-                });
-                } else {
-                	news += "</ul>No news articles matched query. Please try broadening it."
-                }
-                news +="</div>";
-                $("#accordion").append(news + "</ul>");
-                $("#accordion").accordion("refresh");
-                $("#accordion").accordion('option', 'select', 1);
-            },
-            error: function () {
-                alert("Could not contact NPR API");
-            }
+            var infowindow = new google.maps.InfoWindow({
+              content: contentString,
+            });
+            google.maps.event.addListener(marker, 'click', function() {
+                infowindow.open(map,marker);
+            });
+            google.maps.event.addListener(map, 'click', function() {
+                infowindow.close();
+            });
+          }
         });
+        //get food within map viewport
+        
     }
     
+    function validateForm(searchBox){
+        var zipRef = myRef.child(zipcode);
+        var name = $("#name").value;
+        var addr = $("#pac-input").value;
+        var curbox = document.getElementById("current");
+        if(name.length > 0 && (addr.length > 0 || curbox.checked == true)){
+            //alert("enable search");
+            
+            var places = searchBox.getPlaces();
+            // For each place, get the icon, place name, and location.                
+            console.log(places[0].formated_address);
+            console.log(places[0].geometry.location.d, places[0].geometry.location.e);
+            /*var item = {};
+            item['name'] = "Gaurang name2";
+            item['loc'] = "Gaurang loc";
+            item['desc'] = "Gaurang description";
+            
+            var newPushRef = zipRef.push();
+            // Set some data to the generated location
+            newPushRef.set(item);*/
+
+        
+            document.getElementById("submit").disabled = false;
+            console.log($('pac-input').text());
+        } else {
+            document.getElementById("submit").disabled = true;
+        }
+    }
     $(document).ready(function(){      
         //
     });
@@ -257,28 +201,20 @@
     
   </head>
   <body>
-      <body style = "font-family:Lato;">
-          <div style="float:left; width:30%; overflow-y:scroll; height:100%">
-              <div id = "main" style = "background-image:url('images/lightbackground'); background-repeat:repeat;padding:20px;border-bottom:2px solid;text-align:center">
-                  <img src = "images/logo.png" alt = "Source:http://www.cunard.com" style="width: 120px; margin-bottom: -25px;" />
-                  <h1 style = "text-align:center;">THE DAILY PLANET</h1>
-                  <h4 style = "text-align:center;margin-top:-20px;font-weight:300">Your Newspaper on the Globe</h4>
-                  <br>
-                  <div id="newsmenu" style = "text-align:center;display:inline-box;">
-                      <button id="news2" style="border: 2px red solid" class="btn1" value="news2">Top News</button>
-                      <button id="politics"  style="border: 2px black solid" class="btn1" value="politics">Politics</button>
-                      <button id="technology" style="border: 2px black solid" class="btn1" value="technology">Technology</button>
-                      <button id="money" style="border: 2px black solid" class="btn1" value="money">Money</button>
-                      <button id="sports" style="border: 2px black solid" class="btn1" value="sports">Sports</button>
-                  </div>
-              </div>
-              <div id ="news" style="padding:10px 0px;">
-              </div>
-              <div id="accordion">                
-             </div>              
-          
-         </div>
-    <input id="pac-input" class="controls" type="text" placeholder="Search Box">
-    <div style="float:right; width:70%" id="map-canvas"/>
+      <body>
+        <form id="foodaddr">
+            <table>
+            <tr>
+            <td>Name: </td><td>
+            <input type=text width=20 id="name" onchange="/*validateForm()*/"/>
+            </td></tr><td>Adress: </td>
+            <td>
+            <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+            </td><tr><td></td><td>Use my current location: <input type=checkbox id="current" onchange="/*validateForm()*/"/></td></tr>
+            <td>Description: </td><td><textarea id="desc"></textarea></td></tr>
+            </table>
+            <input type="button" id="submit" value="Add Food" onClick="/*validateForm()*/" disabled=true/>
+        </form>          
+    <div style="width:90%" id="map-canvas"/>
   </body>
 </html>
