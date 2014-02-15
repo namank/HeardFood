@@ -84,13 +84,12 @@
             
         });     */     
 
-        
-
         // To add the marker to the map, use the 'map' property
         var marker = new google.maps.Marker({
             position: latlng,
             map: map,
-            title:"My Location"
+            title:"My Location",
+            icon: 'curLoc.png'
         });
         
         var input = /** @type {HTMLInputElement} */ (document.getElementById('pac-input'));
@@ -149,8 +148,8 @@
         // for each event, see if lat long is "near"
         zipRef.on('child_added', function(snapshot) {
           var item = snapshot.val();
-          if (map.getBounds().contains(new google.maps.LatLng(item.lat, item.lng))) {
-            // To add the marker to the map, use the 'map' property
+          if (true) { // map.getBounds().contains(new google.maps.LatLng(item.lat, item.lng))) {
+            // To add the marker to the map, use the 'map' property            
             var marker = new google.maps.Marker({
                 position: new google.maps.LatLng(item.lat, item.lng),
                 map: map,
