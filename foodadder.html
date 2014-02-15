@@ -1,0 +1,28 @@
+<html>
+<script>
+function validateForm(){
+	var name = document.getElementById("name").value;
+	var addr = document.getElementById("street").value;
+	var curbox = document.getElementById("current");
+	if(name.length > 0 && (addr.length > 0 || curbox.checked == true)){
+		//alert("enable search");
+		document.getElementById("submit").disabled = false;
+	}
+}
+</script>
+<body>
+<form id="foodaddr">
+<table>
+<tr>
+<td>Name: </td><td>
+<input type=text width=20 id="name" onchange="validateForm()"/>
+</td></tr><td>Adress: </td>
+<td>
+<input type=text width=20 id="street" onchange="validateForm()"/>
+</td><tr><td></td><td>Use my current location: <input type=checkbox id="current" onchange="validateForm()"/></td></tr>
+<td>Description: </td><td><textarea id="desc"></textarea></td></tr>
+</table>
+<input type="submit" id="submit" onClick="validateForm()" disabled=true/>
+</form>
+</body>
+</html>

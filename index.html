@@ -6,7 +6,7 @@
     <meta name="keywords" content="Free Food! ">
     <meta name="author" content="Gaurang Bhatt, Namank Shah">
     <meta charset="UTF-8">
-    <link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon" />
+    <!-- TODO <link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon" /> -->
     <title>Heard Food</title>
     <style type="text/css">
       html { height: 100% }
@@ -60,6 +60,9 @@
 
     </style>    
     <script type="text/javascript" src="http://code.jquery.com/jquery-1.11.0.min.js"> </script>
+    <link rel="stylesheet" href="jquery-ui.css">    
+    <script src="jquery-ui.js"></script>
+    <link rel="stylesheet" href="style.css">
     <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBspUEDd0uX8Il_1rp3Jri5bju2THqfezE&sensor=false&libraries=places"></script>
     <script type='text/javascript' src='https://cdn.firebase.com/v0/firebase.js'></script>
     <script type="text/javascript">
@@ -92,22 +95,8 @@
             icon: 'curLoc.png'
         });
         
-        var input = /** @type {HTMLInputElement} */ (document.getElementById('pac-input'));
-        
-        $("pac-input").val("");
-        var searchBox = new google.maps.places.SearchBox( /** @type {HTMLInputElement} */ (input));
-        google.maps.event.addListener(searchBox, 'places_changed', function() {            
-            var places = searchBox.getPlaces();
-            var name = document.getElementById("name").value;
-            var addr = document.getElementById("pac-input").value;
-            var curbox = document.getElementById("current");
-            var desc = document.getElementById("desc").value;
-            item = {};
-            item['name'] = name;
-            item['loc'] = addr;
-            item['lat'] = places[0].geometry.location.d;
-            item['lng'] = places[0].geometry.location.e;                
-            item['desc'] = desc;            
+        google.maps.event.addListener(map, 'click', function(clickInfo) {            
+            $("#dialog-form").data('lat',clickInfo.latLng.lat()).data('lng', clickInfo.latLng.lng()).dialog('open');
         });
         
         geocoder.geocode({'latLng': latlng}, function(results, status) {
@@ -142,36 +131,39 @@
     };
     
     function displayFood(zipcode) {
-        var zipRef = myRef.child(zipcode);
+        
         
         // display food
         // for each event, see if lat long is "near"
-        zipRef.on('child_added', function(snapshot) {
-          var item = snapshot.val();
-          if (true) { // map.getBounds().contains(new google.maps.LatLng(item.lat, item.lng))) {
-            // To add the marker to the map, use the 'map' property            
-            var marker = new google.maps.Marker({
-                position: new google.maps.LatLng(item.lat, item.lng),
-                map: map,
-                title:item.name
-            });
-            var contentString = '<div id="content">'+              
-              '<h4 id="itemHeader" class="header">'+item.name+'</h4>'+
-              '<div id="itemContent">'+
-              item.loc+'<br/>'+item.desc+''+
-              '</div>'+
-              '</div>';
+        myRef.on('child_added', function(snapshot) {
+            var zipRef = myRef.child(snapshot.name());
+            zipRef.on('child_added', function(snapshot) {
+              var item = snapshot.val();
+              if (true) { // map.getBounds().contains(new google.maps.LatLng(item.lat, item.lng))) {
+                // To add the marker to the map, use the 'map' property            
+                var marker = new google.maps.Marker({
+                    position: new google.maps.LatLng(item.lat, item.lng),
+                    map: map,
+                    title:item.name
+                });
+                var contentString = '<div id="content">'+              
+                  '<h4 id="itemHeader" class="header">'+item.name+'</h4>'+
+                  '<div id="itemContent">'+
+                  item.loc+'<br/>'+item.desc+''+
+                  '</div>'+
+                  '</div>';
 
-            var infowindow = new google.maps.InfoWindow({
-              content: contentString,
+                var infowindow = new google.maps.InfoWindow({
+                  content: contentString,
+                });
+                google.maps.event.addListener(marker, 'click', function() {
+                    infowindow.open(map,marker);
+                });
+                google.maps.event.addListener(map, 'click', function() {                
+                    infowindow.close();
+                });
+              }
             });
-            google.maps.event.addListener(marker, 'click', function() {
-                infowindow.open(map,marker);
-            });
-            google.maps.event.addListener(map, 'click', function() {
-                infowindow.close();
-            });
-          }
         });
         //get food within map viewport
         
@@ -186,40 +178,90 @@
             zipRef = myRef.child("19104");
         }
         
-        if(item['name'].length > 0 && (item['loc'].length > 0 || document.getElementById("curbox").checked == true)){            
+        if(item['name'] && item['name'].length > 0 && item['lat'] && item['lng']  ){            
             var newPushRef = zipRef.push();
-            console.log(item);
+            
             // Set some data to the generated location
             newPushRef.set(item);
             
             item = {};
-            document.getElementById("name").value = "";
-            document.getElementById("pac-input").value = "";
-            document.getElementById("desc").value = "";
-            document.getElementById("current").checked = false;            
+            $("#name").val("");
+            $("#desc").val("");
         }
     }
-    $(document).ready(function(){      
-        //
+
+    $(document).ready(function(){    
+        $("#dialog-form").dialog({
+            autoOpen: false,           
+            modal: true,
+            buttons: {
+                "I heard free food!": function () {
+                    item = {};
+                    item['name']=$("#name").val();
+                    item['lat'] = $(this).data('lat');
+                    item['lng'] = $(this).data('lng');
+                    item['desc']=$("#desc").val();
+                    geocoder.geocode({'latLng': new google.maps.LatLng($(this).data('lat'),$(this).data('lng'))},
+                    function(results, status) {
+                        var oldzip = zipcode;
+                        if (status == google.maps.GeocoderStatus.OK) {
+                          if (results[1]) {
+                            var address = results[0].address_components;
+                            zipcode = address[address.length - 1].long_name;
+                            if (zipcode == "") {
+                                console.log("Zip code not found. Using zipcode 19104.");
+                                zipcode = oldzip;
+                            } else {
+                                console.log("Zipcode updated. : ", zipcode);                                
+                            }                
+                          } else {
+                            console.log("Using zipcode 19104. Zip code not found.");
+                            zipcode = oldzip;
+                          }
+                        } else {
+                            zipcode=oldzip;
+                            console.log("Using zipcode 19104. Geocode error: "+status);
+                        }
+                        // push data to server
+                        addFood();
+                    });
+                    
+                    $(this).dialog("close");
+                    
+                },
+                Cancel: function () {
+                    $(this).dialog("close");
+                }
+            }
+        });
     });
     </script>
     
   </head>
   <body>
-      <body>
-        <form id="foodaddr">
-            <table>
-            <tr>
-            <td>Name: </td><td>
-            <input type=text width=20 id="name" />
-            </td></tr><td>Adress: </td>
-            <td>
-            <input id="pac-input" class="controls" type="text" placeholder="Search Box">
-            </td><tr><td></td><td>Use my current location: <input type=checkbox id="current" /></td></tr>
-            <td>Description: </td><td><textarea id="desc"></textarea></td></tr>
-            </table>
-            <input type="button" id="submit" value="Add Food" onclick="addFood()"/>
-        </form>          
-    <div style="width:90%" id="map-canvas"/>
+    <div id="dialog-form" title="Add Free Food!">
+	<form>
+	<fieldset>
+		<label for="name">Name:</label>
+		<input type="name" name="name" id="name" required="required" class="text ui-widget-content ui-corner-all">		
+		<label for="Description">Description:</label>
+		<input type="text" id="desc" value="" class="text ui-widget-content ui-corner-all">
+	</fieldset>
+	</form>
+    </div>
+    <!--<form id="foodaddr">
+        <table>
+        <tr>
+        <td>Name: </td><td>
+        <input type=text width=20 id="name" />
+        </td></tr><td>Adress: </td>
+        <td>
+        <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+        </td><tr><td></td><td>Use my current location: <input type=checkbox id="current" /></td></tr>
+        <td>Description: </td><td><textarea id="desc"></textarea></td></tr>
+        </table>
+        <input type="button" id="submit" value="Add Food" onclick="addFood()"/>
+    </form>  -->        
+    <div style="padding:10px" id="map-canvas"/>
   </body>
 </html>
