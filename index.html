@@ -258,8 +258,14 @@
                     
                 },
                 Cancel: function () {
+                    $("#name").val("");
+                    $("#desc").val("");
                     $(this).dialog("close");
                 }
+            },
+            close: function() {
+                $("#name").val("");
+                $("#desc").val("");
             }
         });
         $("#phone-form").dialog({
@@ -284,9 +290,14 @@
                 },
                 Cancel: function () {
                     $("#zipForm").val("");
+                    $("#phoneForm").val("");
                     $(this).dialog("close");
                 }
             },
+            close: function() {
+                $("#zipForm").val("");
+                $("#phone").val("");
+            }
         });
         $("#signup").click(function() {            
             $("#zipForm").val(zipcode);
@@ -340,14 +351,14 @@
 	</fieldset>
 	</form>
     </div>
-    <div id="instructions" title="Sign up for Free Food Notifications!">
+    <div id="instructions" title="Instructions">
         <center><u><b><h2>Instructions: </h2></u></b></center>
         <ol>
             <li>
                 Add a free food location by clicking on the spot on the map where the free food is.
             </li>
             <li>
-                Click on "get notified" to find out whenever there is free food in your zip code!
+                Click on "Get Notified" to find out whenever there is free food in your zip code!
             </li>
         <ol>
     </div>
