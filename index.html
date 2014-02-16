@@ -194,10 +194,25 @@
         
         if(item['name'] && item['name'].length > 0 && item['lat'] && item['lng']  ){            
             var newPushRef = zipRef.push();
-            
+
             // Set some data to the generated location
             newPushRef.set(item);
             
+            //SEND SMS MESSAGES HERE TO EVERYONE IN 'zipcode'
+            var phoneRef = myRef.child("phones").child(zipcode);
+            phoneRef.on('child_added', function(snapshot) {
+                  var phone = snapshot.val();
+                  console.log(phone);
+                  $.ajax({
+                        url: 'http://gb4.site40.net/HeardFood/sendSms.php',
+                        dataType: 'jsonp',
+                        data: {                            
+                            to: phone, 
+                            body: "Hey! There is free food in your area! www.namank.github.com/HeardFood Location: " + item['lat'] + ", " + item['lng']                            
+                        }
+                  });
+                  
+            });
             item = {};
             $("#name").val("");
             $("#desc").val("");
