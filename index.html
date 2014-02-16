@@ -78,7 +78,19 @@
         latlng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
         var mapOptions = {
             center: latlng,
-            zoom: 15
+            zoom: 15,
+            mapTypeControl: true,
+            mapTypeControlOptions: {                
+                position: google.maps.ControlPosition.RIGHT_BOTTOM
+            },
+            panControl: true,
+            panControlOptions: {
+                position: google.maps.ControlPosition.LEFT_BOTTOM
+            },
+            zoomControl: true,
+            zoomControlOptions: {
+                position: google.maps.ControlPosition.LEFT_BOTTOM
+            },
         };
         map = new google.maps.Map(document.getElementById("map-canvas"),
             mapOptions);
@@ -144,7 +156,8 @@
                 var marker = new google.maps.Marker({
                     position: new google.maps.LatLng(item.lat, item.lng),
                     map: map,
-                    title:item.name
+                    title:item.name,
+                    icon: 'food_logo.png'
                 });
                 var contentString = '<div id="content">'+              
                   '<h4 id="itemHeader" class="header">'+item.name+'</h4>'+
@@ -190,7 +203,8 @@
         }
     }
 
-    $(document).ready(function(){    
+    $(document).ready(function(){ 
+        
         $("#dialog-form").dialog({
             autoOpen: false,           
             modal: true,
@@ -239,6 +253,14 @@
     
   </head>
   <body>
+    <div id="header-content">
+    <div id="header">
+    Heard Food
+    </div>
+    <div id="signup">
+    Get Notified
+    </div>
+    </div>
     <div id="dialog-form" title="Add Free Food!">
 	<form>
 	<fieldset>
@@ -248,20 +270,7 @@
 		<input type="text" id="desc" value="" class="text ui-widget-content ui-corner-all">
 	</fieldset>
 	</form>
-    </div>
-    <!--<form id="foodaddr">
-        <table>
-        <tr>
-        <td>Name: </td><td>
-        <input type=text width=20 id="name" />
-        </td></tr><td>Adress: </td>
-        <td>
-        <input id="pac-input" class="controls" type="text" placeholder="Search Box">
-        </td><tr><td></td><td>Use my current location: <input type=checkbox id="current" /></td></tr>
-        <td>Description: </td><td><textarea id="desc"></textarea></td></tr>
-        </table>
-        <input type="button" id="submit" value="Add Food" onclick="addFood()"/>
-    </form>  -->        
-    <div style="padding:10px" id="map-canvas"/>
+    </div>    
+    <div style="" id="map-canvas"/>
   </body>
 </html>
