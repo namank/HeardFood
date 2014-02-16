@@ -294,6 +294,13 @@
             $("#zipForm").val(zipcode);
             $("#phone-form").dialog("open");
         });
+        $("#header").click(function() {            
+            $("#instructions").dialog("open");
+        });
+        $("#instructions").dialog({
+            autoOpen: false,
+            modal:true,
+        });
     });
     function addPhone(zip, phone){
     
@@ -312,7 +319,7 @@
     Heard Food
     </div>
     <div id="signup" class="logo">
-    Get Notified
+    Get Notified!
     </div>
     </div>
     <div id="dialog-form" title="Add Free Food!">
@@ -334,6 +341,17 @@
 		<input type="text" id="phoneForm" value="" class="text ui-widget-content ui-corner-all">
 	</fieldset>
 	</form>
+    </div>
+    <div id="instructions" title="Sign up for Free Food Notifications!">
+        <center><u><b><h2>Instructions: </h2></u></b></center>
+        <ol>
+            <li>
+                Add a free food location by clicking on the spot on the map where the free food is.
+            </li>
+            <li>
+                Click on "get notified" to find out whenever there is free food in your zip code!
+            </li>
+        <ol>
     </div>
     <div style="" id="map-canvas"/>
   </body>
