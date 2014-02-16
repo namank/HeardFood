@@ -144,39 +144,40 @@
     
     function displayFood(zipcode) {
         
-        
         // display food
         // for each event, see if lat long is "near"
         myRef.on('child_added', function(snapshot) {
             var zipRef = myRef.child(snapshot.name());
-            zipRef.on('child_added', function(snapshot) {
-              var item = snapshot.val();
-              if (true) { // map.getBounds().contains(new google.maps.LatLng(item.lat, item.lng))) {
-                // To add the marker to the map, use the 'map' property            
-                var marker = new google.maps.Marker({
-                    position: new google.maps.LatLng(item.lat, item.lng),
-                    map: map,
-                    title:item.name,
-                    icon: 'food_logo.png'
-                });
-                var contentString = '<div id="content">'+              
-                  '<h4 id="itemHeader" class="header">'+item.name+'</h4>'+
-                  '<div id="itemContent">'+
-                  item.loc+'<br/>'+item.desc+''+
-                  '</div>'+
-                  '</div>';
+            if (snapshot.name() != "phones") {
+                zipRef.on('child_added', function(snapshot) {
+                  var item = snapshot.val();
+                  if (true) { // map.getBounds().contains(new google.maps.LatLng(item.lat, item.lng))) {
+                    // To add the marker to the map, use the 'map' property            
+                    var marker = new google.maps.Marker({
+                        position: new google.maps.LatLng(item.lat, item.lng),
+                        map: map,
+                        title:item.name,
+                        icon: 'food_logo.png'
+                    });
+                    var contentString = '<div id="content">'+              
+                      '<h4 id="itemHeader" class="header">'+item.name+'</h4>'+
+                      '<div id="itemContent">'+
+                      item.loc+'<br/>'+item.desc+''+
+                      '</div>'+
+                      '</div>';
 
-                var infowindow = new google.maps.InfoWindow({
-                  content: contentString,
+                    var infowindow = new google.maps.InfoWindow({
+                      content: contentString,
+                    });
+                    google.maps.event.addListener(marker, 'click', function() {
+                        infowindow.open(map,marker);
+                    });
+                    google.maps.event.addListener(map, 'click', function() {                
+                        infowindow.close();
+                    });
+                  }
                 });
-                google.maps.event.addListener(marker, 'click', function() {
-                    infowindow.open(map,marker);
-                });
-                google.maps.event.addListener(map, 'click', function() {                
-                    infowindow.close();
-                });
-              }
-            });
+            }
         });
         //get food within map viewport
         
@@ -248,16 +249,54 @@
                 }
             }
         });
+        $("#phone-form").dialog({
+            autoOpen: false,
+            modal:true,
+            buttons: {
+                'Get Notified' : function () {
+                    //TODO - verify phone and zip
+                    var zip = $("#zipForm").val();
+                    var phone = $("#phoneForm").val();
+                    
+                    if (zip.match("^[0-9]{5}$") && phone.match("^[0-9]{10}$")) {
+                        zip = zip.match("^[0-9]{5}$")[0];
+                        phone = phone.match("^[0-9]{10}$")[0];
+                        console.log(zip, phone);
+                        addPhone(zip, phone);
+                        
+                    }
+                    $("#zipForm").val("");
+                    $("#phoneForm").val("");
+                    $(this).dialog('close');
+                },
+                Cancel: function () {
+                    $("#zipForm").val("");
+                    $(this).dialog("close");
+                }
+            },
+        });
+        $("#signup").click(function() {            
+            $("#zipForm").val(zipcode);
+            $("#phone-form").dialog("open");
+        });
     });
+    function addPhone(zip, phone){
+    
+        var phoneRef;
+       
+        phoneRef = myRef.child("phones").child(zip).push();
+            
+        phoneRef.set(phone);
+    }
     </script>
     
   </head>
   <body>
     <div id="header-content">
-    <div id="header">
+    <div id="header" class="logo">
     Heard Food
     </div>
-    <div id="signup">
+    <div id="signup" class="logo">
     Get Notified
     </div>
     </div>
@@ -271,6 +310,16 @@
 	</fieldset>
 	</form>
     </div>    
+    <div id="phone-form" title="Sign up for Free Food Notifications!">
+    <form>
+	<fieldset>
+		<label for="name">Zipcode:</label>
+		<input type="name" name="name" id="zipForm" required="required" class="text ui-widget-content ui-corner-all">		
+		<label for="Description">Phone:</label>
+		<input type="text" id="phoneForm" value="" class="text ui-widget-content ui-corner-all">
+	</fieldset>
+	</form>
+    </div>
     <div style="" id="map-canvas"/>
   </body>
 </html>

@@ -10,23 +10,25 @@ fieldset { padding:0; border:0; margin-top:5px; }
 h1 { font-size: 1.2em; margin: .6em 0; }
 .ui-dialog { padding: .3em; }
 
-#header-content{
-    
-    position: fixed;
-    height: 30px;
-    top:0;
+.logo{
     z-index: 1;
-    width:100%;
-    background:rgba(255, 255, 255, 0);
+    position:fixed;
+    margin-top:30px;
+    cursor:pointer;
+    padding:10px;
+    text-decoration:underline;
     font-size:2em;
-}
-
-#header{
+    color:red;
     background: #eeeeff;
-    float:left;
+    border:2px black solid;
+    -webkit-border-radius: 50px;
+    -moz-border-radius: 50px;
+    border-radius: 50px;
+}
+#header{ 
+    margin-left:20px;
 }
 #signup{
-    float:right;
-    background: #eeeeff;
-    
+    margin-right:20px;
+    right:0px;      
 }
